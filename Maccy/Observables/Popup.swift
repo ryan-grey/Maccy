@@ -2,6 +2,7 @@ import AppKit.NSRunningApplication
 import Defaults
 import KeyboardShortcuts
 import Observation
+import os
 
 enum PopupState {
   // Default; shortcut will toggle the popup
@@ -120,6 +121,7 @@ class Popup {
   }
 
   private func handleFirstKeyDown() {
+    AppDelegate.cmdvLog.log("hotkey: fired, popup closed=\(self.isClosed(), privacy: .public)")
     if isClosed() {
       open(height: height)
       state = .opening

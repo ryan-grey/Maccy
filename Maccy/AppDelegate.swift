@@ -2,6 +2,7 @@ import Defaults
 import KeyboardShortcuts
 import Sparkle
 import SwiftUI
+import os
 
 class AppDelegate: NSObject, NSApplicationDelegate {
   var panel: FloatingPanel<ContentView>!
@@ -92,6 +93,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
   func applicationDidFinishLaunching(_ aNotification: Notification) {
     migrateUserDefaults()
+    applyPersonalDefaults()
     disableUnusedGlobalHotkeys()
 
     panel = FloatingPanel(
@@ -185,6 +187,28 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         self.synchronizeMenuIconText()
       }
     }
+  }
+
+  // MARK: - Personal build (github.com/ryan-grey/Maccy, branch cmd-v-popup)
+
+  /// Diagnostics: `log show --predicate 'subsystem == "org.p0deje.Maccy"' --last 10m`
+  static let cmdvLog = Logger(subsystem: "org.p0deje.Maccy", category: "cmdv")
+
+  /// This build has one job: ⌘V opens the history and clicking an item pastes it.
+  /// Re-assert that on every launch so stale preferences or launch arguments
+  /// can never change it, and keep Sparkle from replacing the build with a stock release.
+  private func applyPersonalDefaults() {
+    let cmdV = KeyboardShortcuts.Shortcut(.v, modifiers: [.command])
+    if KeyboardShortcuts.getShortcut(for: .popup) != cmdV {
+      KeyboardShortcuts.setShortcut(cmdV, for: .popup)
+    }
+    Defaults[.pasteByDefault] = true
+    Defaults[.showInStatusBar] = true
+    UserDefaults.standard.set(false, forKey: "SUEnableAutomaticChecks")
+    UserDefaults.standard.set(false, forKey: "SUAutomaticallyUpdate")
+
+    let shortcut = KeyboardShortcuts.getShortcut(for: .popup).map(String.init(describing:)) ?? "none"
+    Self.cmdvLog.log("launch: popup=\(shortcut, privacy: .public) pasteByDefault=\(Defaults[.pasteByDefault], privacy: .public) accessibility=\(Accessibility.allowed, privacy: .public)")
   }
 
   private func disableUnusedGlobalHotkeys() {

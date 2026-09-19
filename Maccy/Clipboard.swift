@@ -1,6 +1,8 @@
 import AppKit
 import Defaults
+import KeyboardShortcuts
 import Sauce
+import os
 
 class Clipboard {
   static let shared = Clipboard()
@@ -111,6 +113,7 @@ class Clipboard {
 
   // Based on https://github.com/Clipy/Clipy/blob/develop/Clipy/Sources/Services/PasteService.swift.
   func paste() {
+    AppDelegate.cmdvLog.log("paste: posting ⌘V, accessibility=\(Accessibility.allowed, privacy: .public)")
     Accessibility.check()
 
     // Add flag that left/right modifier key has been pressed.
@@ -134,8 +137,16 @@ class Clipboard {
     let keyVUp = CGEvent(keyboardEventSource: source, virtualKey: vCode, keyDown: false)
     keyVDown?.flags = cmdFlag
     keyVUp?.flags = cmdFlag
+
+    // Temporarily disable the popup hotkey so the synthetic paste keystroke
+    // reaches the target app instead of re-triggering Maccy when the popup
+    // shortcut is set to the paste shortcut itself (e.g. ⌘V).
+    KeyboardShortcuts.disable(.popup)
     keyVDown?.post(tap: .cgSessionEventTap)
     keyVUp?.post(tap: .cgSessionEventTap)
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+      KeyboardShortcuts.enable(.popup)
+    }
   }
 
   func clear() {
