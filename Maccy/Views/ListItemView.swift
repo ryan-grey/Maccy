@@ -93,7 +93,8 @@ struct ListItemView<Title: View, ID: Hashable>: View {
             .foregroundStyle(Color.white)
         }
 
-        if !shortcuts.isEmpty {
+        // The labels only. ⌘1…⌘9 and the pin letters still select their rows.
+        if Defaults[.showShortcuts], !shortcuts.isEmpty {
           ZStack(alignment: .trailing) {
             ForEach(shortcuts) { shortcut in
               let visible = shortcut.isVisible(shortcuts, modifierFlags.flags)

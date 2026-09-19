@@ -55,18 +55,27 @@ extension Defaults.Keys {
   static let pinTo = Key<PinsPosition>("pinTo", default: .top, suite: preferencesSuite)
   static let popupPosition = Key<PopupPosition>("popupPosition", default: .cursor)
   static let popupScreen = Key<Int>("popupScreen", default: 0)
-  static let openPreviewAutomatically = Key<Bool>("openPreviewAutomatically", default: true)
+  // Off in this fork: hovering a row no longer slides the preview panel out beside the list.
+  // The preview is still there on demand (its toolbar button / shortcut).
+  static let openPreviewAutomatically = Key<Bool>("openPreviewAutomatically", default: false)
   static let previewDelay = Key<Int>("previewDelay", default: 1500)
   static let removeFormattingByDefault = Key<Bool>("removeFormattingByDefault", default: false)
   static let searchMode = Key<Search.Mode>("searchMode", default: .exact)
-  static let showFooter = Key<Bool>("showFooter", default: true)
+  // Off in this fork, with showSearch below: the popup is the clips and nothing else. The footer's
+  // actions keep their shortcuts while hidden (⌘, for settings, ⌘Q to quit).
+  static let showFooter = Key<Bool>("showFooter", default: false)
   static let showInStatusBar = Key<Bool>("showInStatusBar", default: true)
   static let showRecentCopyInMenuBar = Key<Bool>("showRecentCopyInMenuBar", default: false)
-  static let showSearch = Key<Bool>("showSearch", default: true)
+  static let showSearch = Key<Bool>("showSearch", default: false)
+  // The ⌘1-style label at the end of each row. Off in this fork; the shortcuts themselves stay.
+  static let showShortcuts = Key<Bool>("showShortcuts", default: false)
   static let searchVisibility = Key<SearchVisibility>("searchVisibility", default: .always)
   static let showSpecialSymbols = Key<Bool>("showSpecialSymbols", default: true)
   static let showTitle = Key<Bool>("showTitle", default: true)
   static let size = Key<Int>("historySize", default: 200)
+  // How many unpinned items the popup lists. The rest of the history is kept, just not shown.
+  // 0 lists everything, as upstream does. `defaults write org.p0deje.Maccy visibleSize -int 5`.
+  static let visibleSize = Key<Int>("visibleSize", default: 3)
   static let sortBy = Key<Sorter.By>("sortBy", default: .lastCopiedAt)
   static let suppressClearAlert = Key<Bool>("suppressClearAlert", default: false)
   static let windowSize = Key<NSSize>("windowSize", default: NSSize(width: 450, height: 800), suite: preferencesSuite)

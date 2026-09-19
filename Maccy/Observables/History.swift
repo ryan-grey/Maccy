@@ -106,7 +106,7 @@ class History: ItemsContainer { // swiftlint:disable:this type_body_length
     let descriptor = FetchDescriptor<HistoryItem>()
     let results = try Storage.shared.context.fetch(descriptor)
     all = sorter.sort(results).map { HistoryItemDecorator($0) }
-    items = all
+    items = shown(all)
 
     limitHistorySize(to: Defaults[.size])
 
@@ -114,6 +114,20 @@ class History: ItemsContainer { // swiftlint:disable:this type_body_length
     // Ensure that panel size is proper *after* loading all items.
     Task {
       AppState.shared.popup.needsResize = true
+    }
+  }
+
+  /// What the popup lists: every pin, and only the first `visibleSize` unpinned items of `list`.
+  /// `list` is already in display order, so "first" is "most recent" under the default sort, and
+  /// the best matches during a search. The history itself is untouched: older items stay stored,
+  /// stay searchable, and move up as newer ones are deleted.
+  private func shown(_ list: [HistoryItemDecorator]) -> [HistoryItemDecorator] {
+    var left = Defaults[.visibleSize]
+    guard left > 0 else { return list }
+    return list.filter { item in
+      if item.isPinned { return true }
+      left -= 1
+      return left >= 0
     }
   }
 
@@ -192,7 +206,7 @@ class History: ItemsContainer { // swiftlint:disable:this type_body_length
         all.insert(itemDecorator, at: index)
       }
 
-      items = all
+      items = shown(all)
       updateUnpinnedShortcuts()
       AppState.shared.popup.needsResize = true
     }
@@ -223,7 +237,7 @@ class History: ItemsContainer { // swiftlint:disable:this type_body_length
       }
       all.removeAll(where: \.isUnpinned)
       sessionLog.removeValues { $0.pin == nil }
-      items = all
+      items = shown(all)
 
       try? Storage.shared.context.transaction {
         try? Storage.shared.context.delete(
@@ -280,7 +294,11 @@ class History: ItemsContainer { // swiftlint:disable:this type_body_length
     }
 
     all.removeAll { $0 == item }
-    items.removeAll { $0 == item }
+    if searchQuery.isEmpty {
+      items = shown(all)      // the next most recent item moves up into the freed row
+    } else {
+      items.removeAll { $0 == item }
+    }
     sessionLog.removeValues { $0 == item.item }
 
     updateUnpinnedShortcuts()
@@ -428,7 +446,7 @@ class History: ItemsContainer { // swiftlint:disable:this type_body_length
       all.insert(item, at: newIndex)
     }
 
-    items = all
+    items = shown(all)
 
     searchQuery = ""
     updateUnpinnedShortcuts()
@@ -455,12 +473,12 @@ class History: ItemsContainer { // swiftlint:disable:this type_body_length
   }
 
   private func updateItems(_ newItems: [Search.SearchResult]) {
-    items = newItems.map { result in
+    items = shown(newItems.map { result in
       let item = result.object
       item.highlight(searchQuery, result.ranges)
 
       return item
-    }
+    })
 
     updateUnpinnedShortcuts()
   }
