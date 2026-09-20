@@ -203,7 +203,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
       KeyboardShortcuts.setShortcut(cmdV, for: .popup)
     }
     Defaults[.pasteByDefault] = true
-    Defaults[.showInStatusBar] = true
+    // No status item at all: ⌘V is the only way in, so the menu bar icon was
+    // decoration. Forced false for the same reason the shortcut is forced -
+    // a stale preference must not be able to put it back.
+    Defaults[.showInStatusBar] = false
     UserDefaults.standard.set(false, forKey: "SUEnableAutomaticChecks")
     UserDefaults.standard.set(false, forKey: "SUAutomaticallyUpdate")
 
